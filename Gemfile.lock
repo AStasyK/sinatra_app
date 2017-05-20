@@ -2,11 +2,18 @@ GEM
   remote: https://rubygems.org/
   specs:
     backports (3.8.0)
+    dotenv (2.2.1)
+    json (2.1.0)
     multi_json (1.12.1)
     mustermann (1.0.0)
+    pg (0.20.0-x86-mingw32)
     rack (2.0.2)
     rack-protection (2.0.0)
       rack
+    rake (12.0.0)
+    sequel (4.46.0)
+    sequel-seed (1.0.0)
+      sequel (>= 4.0)
     sinatra (2.0.0)
       mustermann (~> 1.0)
       rack (~> 2.0)
@@ -25,6 +32,13 @@ PLATFORMS
   x86-mingw32
 
 DEPENDENCIES
+  dotenv
+  json
+  pg
+  rack
+  rake
+  sequel
+  sequel-seed
   sinatra
   sinatra-contrib
 

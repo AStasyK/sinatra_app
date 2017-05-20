@@ -1,0 +1,23 @@
+development:
+ <<: *default
+ database: sinatra_dev
+ password: password
+
+test:
+ <<: *default
+ database: sinatra_test
+ password: password
+
+production:
+ <<: *default
+ database: sinatra_prod
+ password: password
+
+default: &default
+ host: localhost
+ adapter: postgresql
+ encoding: UTF8
+ username: rails_admin
+ timeout: 5000
+ reaping_frequency: 30
+ pool: 5
