@@ -16,22 +16,26 @@ require 'multi_json'
 
 #     register Sinatra::Namespace
 
-%w{controllers models routes}.each{|dir| Dir.glob("./#{dir}/*.rb", &method(:require))}
-
 DB = Sequel.connect(
     adapter: :postgres,
-    database: 'sinatra_seq_dev',
+    database: 'sinatra_dev',
     host: 'localhost',
     password: 'password',
-    user: 'sinatra_admin',
+    user: 'rails_admin',
     max_connections: 10,
 # logger: Logger.new('log/db.log')
 )
 
-# лучше перенести в rake-task
-Sequel::Seed.setup :development
-Sequel.extension :seed
-Sequel::Seeder.apply(DB, './seeds')
+
+%w{controllers models routes}.each{|dir| Dir.glob("./#{dir}/*.rb", &method(:require))}
+
+before do
+  content_type 'application/json'
+end
+
+def collection_to_api(collection)
+  MultiJson.dump(collection.map { |s| s.to_api })
+end
 
     get '/' do
        'Hello My Sinatra - Easy and Wide World!'

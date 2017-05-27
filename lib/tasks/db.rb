@@ -1,5 +1,7 @@
 require 'rake'
 require 'dotenv/tasks'
+require 'sequel'
+require 'sequel/extensions/seed'
 
 namespace :db do
 
@@ -15,7 +17,7 @@ namespace :db do
   puts "ENV['DATABASE'] = #{ENV['DATABASE'].inspect}"
   puts "connection_string = #{connection_string.inspect}"
 
-  db = Sequel.connect(connection_string)
+  DB = Sequel.connect(connection_string)
   desc "Prints current schema version"
   task :version do
     puts "Sinatra::Application.settings = #{Sinatra::Application.settings.inspect}"
@@ -23,9 +25,9 @@ namespace :db do
     puts "ENV['RACK_ENV'] = #{ENV['RACK_ENV'].inspect}"
     puts "environment = #{environment.inspect}"
     puts "ENV['DATABASE_URL'] = #{ENV['DATABASE_URL'].inspect}"
-    puts "db[:schema_info].first = #{db[:schema_info].first.inspect}"
-    version = if db.tables.include?(:schema_info)
-                db[:schema_info].first[:version]
+    puts "DB[:schema_info].first = #{DB[:schema_info].first.inspect}"
+    version = if DB.tables.include?(:schema_info)
+                DB[:schema_info].first[:version]
               end || 0
     puts "Schema Version: #{version}"
   end
@@ -34,12 +36,12 @@ namespace :db do
   task :migrate, [:version] => [:dotenv] do |_, args|
     version = args[:version]
     raise "Missing Connection string" if connection_string.nil?
-    # db = Sequel.connect(connection_string)
+    # DB = Sequel.connect(connection_string)
     message = if version.nil?
-                Sequel::Migrator.run(db, migrations_directory)
+                Sequel::Migrator.run(DB, migrations_directory)
                 'Migrated to latest'
               else
-                Sequel::Migrator.run(db, migrations_directory, target: version.to_i)
+                Sequel::Migrator.run(DB, migrations_directory, target: version.to_i)
                 "Migrated to version #{version}"
               end
     puts message if environment != 'test'
@@ -48,28 +50,33 @@ namespace :db do
   desc "Perform rollback to specified target or full rollback as default"
   ## ??
   task :seed do
-    # seed_file = File.join('./seeds/seeds.rb')
+    puts 'seed task running'
+    Sequel::Seed.setup :development
+    Sequel.extension :seed
+    Sequel::Seeder.apply(DB, './seeds')
+
+    # seed_file = File.join('./seeds/*.rb')
     # puts "seed_file = #{seed_file}"
     # load(seed_file) if File.exist?(seed_file)
 
-    dataset_comp = db[:companies]
-    dataset_comp.insert(name: 'BuildEmpire', location: 'London')
-    dataset_comp.insert(name: 'Apple', location: 'LA')
+    # dataset_comp = DB[:companies]
+    # dataset_comp.insert(name: 'BuildEmpire', location: 'London')
+    # dataset_comp.insert(name: 'Apple', location: 'LA')
 
   end
 
 
   desc "Perform rollback to specified target or full rollback as default"
   task :rollback, :target do |t, args|
-    args.with_defaults(:target => 0)
-    Sequel::Migrator.run(db, migrations_directory, :target => args[:target].to_i)
-    Rake::Task['db:version'].execute
+    args.with_defaults(target: 0)
+    Sequel::Migrator.run(DB, migrations_directory, :target => args[:target].to_i)
+    Rake::Task['DB:version'].execute
   end
 
   desc "Perform migration reset (full rollback and migration)"
   task :reset do
-    Sequel::Migrator.run(db, migrations_directory, :target => 0)
-    Sequel::Migrator.run(db, migrations_directory)
-    Rake::Task['db:version'].execute
+    Sequel::Migrator.run(DB, migrations_directory, target: 0)
+    Sequel::Migrator.run(DB, migrations_directory)
+    Rake::Task['DB:version'].execute
   end
 end
